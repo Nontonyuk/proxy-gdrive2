@@ -1,0 +1,81 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Player Generator</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 20px; padding: 0; background: #f8f8f8; }
+    input, select, textarea, button {
+      display: block; width: 100%; margin-bottom: 12px; padding: 10px;
+      border: 1px solid #ccc; border-radius: 4px; font-size: 16px;
+    }
+    button { background: #007bff; color: white; cursor: pointer; }
+    button:hover { background: #0056b3; }
+    textarea { height: 100px; }
+    .container { max-width: 600px; margin: auto; background: #fff; padding: 20px; border-radius: 8px; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h2>🎬 Player Generator</h2>
+    <label>Google Drive File ID / YouTube URL</label>
+    <input id="gdrive-id" placeholder="Contoh: 1ABCDEFgHIJKLmnopq">
+
+    <label>API Key (for Google Drive only)</label>
+    <input id="api-key" placeholder="Contoh: AIzaSy...">
+
+    <label>JWPlayer Library ID (only for JWPlayer)</label>
+    <input id="jwplayer-id" placeholder="Opsional">
+
+    <label>Pilih Player</label>
+    <select id="player">
+      <option value="plyr">Plyr.io</option>
+      <option value="fluid">Fluid Player</option>
+      <option value="jwplayer">JWPlayer</option>
+      <option value="default">Default HTML5</option>
+    </select>
+
+    <label>Token Expiry (menit)</label>
+    <input id="expiry" type="number" value="120">
+
+    <button id="generate">Generate Token + Iframe</button>
+
+    <label>🔒 Embed Code:</label>
+    <textarea id="embed" readonly></textarea>
+
+    <label>▶️ Preview:</label>
+    <div id="preview"></div>
+  </div>
+
+  <script>
+    document.getElementById("generate").addEventListener("click", function () {
+      const id = document.getElementById("gdrive-id").value.trim();
+      const apikey = document.getElementById("api-key").value.trim();
+      const jwid = document.getElementById("jwplayer-id").value.trim();
+      const player = document.getElementById("player").value;
+      const expiry = parseInt(document.getElementById("expiry").value.trim()) || 60;
+
+      if (!id || !apikey) {
+        alert("Mohon isi Google Drive File ID dan API Key.");
+        return;
+      }
+
+      const token = btoa(JSON.stringify({
+        src: id,
+        key: apikey,
+        player: player,
+        jwid: jwid,
+        exp: Math.floor(Date.now() / 1000) + (expiry * 60)
+      }));
+
+      const iframeUrl = `https://player-gdrive.kinikita-xyz.workers.dev/video/${token}`;
+      const embed = `<iframe src="${iframeUrl}" frameborder="0" allowfullscreen style="width:100%;height:360px;"></iframe>`;
+
+      document.getElementById("embed").value = embed;
+      document.getElementById("preview").innerHTML = embed;
+    });
+  </script>
+</body>
+</html>
