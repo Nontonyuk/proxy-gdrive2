@@ -85,7 +85,6 @@
       };
 
       const token = await signToken(payload);
-      const token = pathParts[2].split(':')[0]; // buang `:1` kalau ada
       const iframeUrl = `https://player-gdrive.kinikita-xyz.workers.dev/video/${token.replace(/:.*/, '')}`;
       const embed = `<iframe src="${iframeUrl}" frameborder="0" allowfullscreen style="width:100%;height:360px;"></iframe>`;
 
