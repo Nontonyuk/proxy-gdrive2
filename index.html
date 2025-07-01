@@ -1,94 +1,401 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Player Generator</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Video Player Generator</title>
   <style>
-    body { font-family: Arial, sans-serif; margin: 20px; padding: 0; background: #f8f8f8; }
-    input, select, textarea, button {
-      display: block; width: 100%; margin-bottom: 12px; padding: 10px;
-      border: 1px solid #ccc; border-radius: 4px; font-size: 16px;
+    body { 
+      font-family: Arial, sans-serif; 
+      margin: 20px; 
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
     }
-    button { background: #007bff; color: white; cursor: pointer; }
+    input, select, textarea, button {
+      display: block; 
+      width: 100%; 
+      margin-bottom: 12px; 
+      padding: 10px;
+      border: 1px solid #ccc; 
+      border-radius: 4px; 
+      font-size: 16px;
+      box-sizing: border-box;
+    }
+    button { 
+      background: #007bff; 
+      color: white; 
+      cursor: pointer;
+      border: none;
+      transition: background 0.3s;
+    }
     button:hover { background: #0056b3; }
-    textarea { height: 100px; }
-    .container { max-width: 600px; margin: auto; background: #fff; padding: 20px; border-radius: 8px; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
+    button:disabled { background: #ccc; cursor: not-allowed; }
+    textarea { height: 100px; resize: vertical; }
+    .container { 
+      max-width: 600px; 
+      margin: auto; 
+      background: #fff; 
+      padding: 30px; 
+      border-radius: 12px; 
+      box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+    }
+    .error { 
+      background: #f8d7da; 
+      color: #721c24; 
+      padding: 10px; 
+      border-radius: 4px; 
+      margin-bottom: 15px;
+      display: none;
+    }
+    .success { 
+      background: #d4edda; 
+      color: #155724; 
+      padding: 10px; 
+      border-radius: 4px; 
+      margin-bottom: 15px;
+      display: none;
+    }
+    .info { 
+      background: #d1ecf1; 
+      color: #0c5460; 
+      padding: 10px; 
+      border-radius: 4px; 
+      margin-bottom: 15px;
+      font-size: 14px;
+    }
+    .debug-section {
+      margin-top: 20px;
+      padding: 15px;
+      background: #f8f9fa;
+      border-radius: 4px;
+      border-left: 4px solid #007bff;
+    }
+    .debug-section h4 {
+      margin-top: 0;
+      color: #007bff;
+    }
+    .test-buttons {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-top: 10px;
+    }
+    .test-buttons button {
+      margin-bottom: 0;
+    }
+    label {
+      font-weight: bold;
+      margin-bottom: 5px;
+      display: block;
+      color: #333;
+    }
+    h2 {
+      color: #333;
+      text-align: center;
+      margin-bottom: 30px;
+    }
   </style>
 </head>
 <body>
   <div class="container">
-    <h2>🎬 Player Generator</h2>
+    <h2>🎬 Video Player Generator</h2>
+    
+    <div class="info">
+      <strong>Instructions:</strong>
+      <ul style="margin: 10px 0; padding-left: 20px;">
+        <li>For Google Drive: Enter the file ID (from the share URL after /d/) and API key</li>
+        <li>For YouTube: Enter the full YouTube URL (player will redirect appropriately)</li>
+        <li>Use the debug tools below to troubleshoot any issues</li>
+      </ul>
+    </div>
+
+    <div id="error-message" class="error"></div>
+    <div id="success-message" class="success"></div>
+
     <label>Google Drive File ID / YouTube URL</label>
-    <input id="gdrive-id" placeholder="Contoh: 1ABCDEFgHIJKLmnopq">
+    <input id="gdrive-id" placeholder="e.g., 1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs74OgvE2upms">
 
     <label>API Key (for Google Drive only)</label>
-    <input id="api-key" placeholder="Contoh: AIzaSy...">
+    <input id="api-key" placeholder="Your Google Drive API key" type="password">
 
     <label>JWPlayer Library ID (only for JWPlayer)</label>
-    <input id="jwplayer-id" placeholder="Opsional">
+    <input id="jwplayer-id" placeholder="Optional - JWPlayer library ID">
 
-    <label>Pilih Player</label>
+    <label>Choose Player</label>
     <select id="player">
-      <option value="plyr">Plyr.io</option>
+      <option value="plyr">Plyr.io (Recommended)</option>
       <option value="fluid">Fluid Player</option>
       <option value="jwplayer">JWPlayer</option>
       <option value="default">Default HTML5</option>
     </select>
 
-    <label>Token Expiry (menit)</label>
-    <input id="expiry" type="number" value="4300">
+    <label>Token Expiry (minutes)</label>
+    <input id="expiry" type="number" value="120" min="1" max="1440">
 
-    <button id="generate">Generate Token + Iframe</button>
+    <button id="generate">🚀 Generate Player</button>
 
     <label>🔒 Embed Code:</label>
-    <textarea id="embed" readonly></textarea>
+    <textarea id="embed" readonly placeholder="Generated embed code will appear here..."></textarea>
 
     <label>▶️ Preview:</label>
-    <div id="preview"></div>
+    <div id="preview" style="border: 1px solid #ddd; min-height: 200px; border-radius: 4px; background: #f8f9fa;"></div>
+
+    <div class="debug-section">
+      <h4>🔧 Debug Tools</h4>
+      <div class="test-buttons">
+        <button id="test-token" type="button">Test Token</button>
+        <button id="test-stream" type="button">Test Stream</button>
+        <button id="test-api" type="button">Test API Key</button>
+        <button id="debug-info" type="button">Debug Info</button>
+      </div>
+      <div id="debug-output" style="margin-top: 15px; padding: 10px; background: #fff; border-radius: 4px; font-family: monospace; font-size: 12px; max-height: 200px; overflow-y: auto; display: none;"></div>
+    </div>
   </div>
 
   <script>
-    const SECRET = '%Ir;vPL+VJ:D#xA[e#j1&.@^LkW*#S(z'; // HARUS sama dengan di Worker
+    const SECRET = '%Ir;vPL+VJ:D#xA[e#j1&.@^LkW*#S(z';
+    const WORKER_URL = 'https://player-gdrive.kinikita-xyz.workers.dev';
 
-    async function signToken(payload) {
-      const encoder = new TextEncoder();
-      const raw = btoa(JSON.stringify(payload));
-      const key = await crypto.subtle.importKey(
-        'raw', encoder.encode(SECRET), { name: 'HMAC', hash: 'SHA-256' }, false, ['sign']
-      );
-      const sigBuf = await crypto.subtle.sign('HMAC', key, encoder.encode(raw));
-      const sig = btoa(String.fromCharCode(...new Uint8Array(sigBuf)))
-        .replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
-      return `${raw}.${sig}`;
+    function showError(message) {
+      const errorDiv = document.getElementById('error-message');
+      errorDiv.textContent = message;
+      errorDiv.style.display = 'block';
+      document.getElementById('success-message').style.display = 'none';
     }
 
-    document.getElementById("generate").addEventListener("click", async function () {
+    function showSuccess(message) {
+      const successDiv = document.getElementById('success-message');
+      successDiv.textContent = message;
+      successDiv.style.display = 'block';
+      document.getElementById('error-message').style.display = 'none';
+    }
+
+    function clearMessages() {
+      document.getElementById('error-message').style.display = 'none';
+      document.getElementById('success-message').style.display = 'none';
+    }
+
+    function debugLog(message, data = null) {
+      const debugOutput = document.getElementById('debug-output');
+      const timestamp = new Date().toLocaleTimeString();
+      const logEntry = `[${timestamp}] ${message}`;
+      
+      console.log(logEntry, data);
+      
+      if (debugOutput.style.display !== 'none') {
+        debugOutput.innerHTML += logEntry + (data ? '\n' + JSON.stringify(data, null, 2) : '') + '\n\n';
+        debugOutput.scrollTop = debugOutput.scrollHeight;
+      }
+    }
+
+    async function signToken(payload) {
+      try {
+        const encoder = new TextEncoder();
+        const raw = btoa(JSON.stringify(payload));
+        const key = await crypto.subtle.importKey(
+          'raw', 
+          encoder.encode(SECRET), 
+          { name: 'HMAC', hash: 'SHA-256' }, 
+          false, 
+          ['sign']
+        );
+        const sigBuf = await crypto.subtle.sign('HMAC', key, encoder.encode(raw));
+        const sig = btoa(String.fromCharCode(...new Uint8Array(sigBuf)))
+          .replace(/\+/g, '-')
+          .replace(/\//g, '_')
+          .replace(/=+$/, '');
+        return `${raw}.${sig}`;
+      } catch (error) {
+        debugLog('Token signing error:', error);
+        throw error;
+      }
+    }
+
+    function extractGDriveId(input) {
+      // Handle various Google Drive URL formats
+      const patterns = [
+        /\/d\/([a-zA-Z0-9-_]+)/,
+        /id=([a-zA-Z0-9-_]+)/,
+        /^([a-zA-Z0-9-_]+)$/
+      ];
+      
+      for (const pattern of patterns) {
+        const match = input.match(pattern);
+        if (match) return match[1];
+      }
+      
+      return input; // Return as-is if no pattern matches
+    }
+
+    function validateInputs() {
       const id = document.getElementById("gdrive-id").value.trim();
       const apikey = document.getElementById("api-key").value.trim();
-      const jwid = document.getElementById("jwplayer-id").value.trim();
-      const player = document.getElementById("player").value;
-      const expiry = parseInt(document.getElementById("expiry").value.trim()) || 60;
-
-      if (!id || !apikey) {
-        alert("Mohon isi Google Drive File ID dan API Key.");
-        return;
+      
+      if (!id) {
+        throw new Error("Please enter a Google Drive File ID or YouTube URL");
       }
+      
+      // Check if it's a YouTube URL
+      if (id.includes('youtube.com') || id.includes('youtu.be')) {
+        return { isYouTube: true, id, apikey };
+      }
+      
+      if (!apikey) {
+        throw new Error("API Key is required for Google Drive videos");
+      }
+      
+      return { isYouTube: false, id: extractGDriveId(id), apikey };
+    }
 
-      const payload = {
-        src: id,
-        apikey: apikey,
-        type: player,
-        jwplayerId: jwid,
-        exp: Math.floor(Date.now() / 1000) + (expiry * 60)
-      };
+    // Main generate function
+    document.getElementById("generate").addEventListener("click", async function () {
+      clearMessages();
+      
+      try {
+        const { isYouTube, id, apikey } = validateInputs();
+        const jwid = document.getElementById("jwplayer-id").value.trim();
+        const player = document.getElementById("player").value;
+        const expiry = parseInt(document.getElementById("expiry").value.trim()) || 120;
 
-      const token = await signToken(payload);
-      const iframeUrl = `https://player-gdrive.kinikita-xyz.workers.dev/video/${token.replace(/:.*/, '')}`;
-      const embed = `<iframe src="${iframeUrl}" frameborder="0" allowfullscreen style="width:100%;height:360px;"></iframe>`;
+        debugLog('Generating player for:', { isYouTube, id: id.substring(0, 10) + '...', player, expiry });
 
-      document.getElementById("embed").value = embed;
-      document.getElementById("preview").innerHTML = embed;
+        if (isYouTube) {
+          // For YouTube, create a simple redirect
+          const embed = `<iframe src="${id}" frameborder="0" allowfullscreen style="width:100%;height:360px;"></iframe>`;
+          document.getElementById("embed").value = embed;
+          document.getElementById("preview").innerHTML = embed;
+          showSuccess("YouTube embed code generated successfully!");
+          return;
+        }
+
+        const payload = { 
+          src: id, 
+          apikey: apikey, 
+          type: player, 
+          jwplayerId: jwid, 
+          exp: Math.floor(Date.now() / 1000) + (expiry * 60) 
+        };
+
+        debugLog('Token payload created:', { ...payload, apikey: '[REDACTED]' });
+
+        const token = await signToken(payload);
+        const iframeUrl = `${WORKER_URL}/video/${token}`;
+        const embed = `<iframe src="${iframeUrl}" frameborder="0" allowfullscreen style="width:100%;height:360px;"></iframe>`;
+
+        document.getElementById("embed").value = embed;
+        document.getElementById("preview").innerHTML = embed;
+        
+        showSuccess("Player generated successfully! Check the preview below.");
+        debugLog('Player generated successfully');
+
+      } catch (error) {
+        showError(error.message);
+        debugLog('Generation error:', error);
+      }
+    });
+
+    // Debug tools
+    document.getElementById("test-token").addEventListener("click", async function () {
+      const debugOutput = document.getElementById('debug-output');
+      debugOutput.style.display = 'block';
+      debugOutput.innerHTML = '';
+      
+      try {
+        const { isYouTube, id, apikey } = validateInputs();
+        if (isYouTube) {
+          debugLog('YouTube URL detected, token test not applicable');
+          return;
+        }
+
+        const payload = { 
+          src: id, 
+          apikey: apikey, 
+          type: 'plyr', 
+          exp: Math.floor(Date.now() / 1000) + 3600 
+        };
+        
+        const token = await signToken(payload);
+        debugLog('Token generated successfully:', { token: token.substring(0, 50) + '...', payload: { ...payload, apikey: '[REDACTED]' } });
+        
+      } catch (error) {
+        debugLog('Token test failed:', error);
+      }
+    });
+
+    document.getElementById("test-stream").addEventListener("click", async function () {
+      const debugOutput = document.getElementById('debug-output');
+      debugOutput.style.display = 'block';
+      
+      try {
+        const { isYouTube, id, apikey } = validateInputs();
+        if (isYouTube) {
+          debugLog('YouTube URL detected, stream test not applicable');
+          return;
+        }
+
+        const payload = { src: id, apikey: apikey, type: 'plyr', exp: Math.floor(Date.now() / 1000) + 3600 };
+        const token = await signToken(payload);
+        const streamUrl = `${WORKER_URL}/video/${token}/stream`;
+        
+        debugLog('Testing stream endpoint:', streamUrl);
+        
+        const response = await fetch(streamUrl, { method: 'HEAD' });
+        debugLog('Stream test response:', { 
+          status: response.status, 
+          statusText: response.statusText,
+          headers: Object.fromEntries(response.headers.entries())
+        });
+        
+      } catch (error) {
+        debugLog('Stream test failed:', error);
+      }
+    });
+
+    document.getElementById("test-api").addEventListener("click", async function () {
+      const debugOutput = document.getElementById('debug-output');
+      debugOutput.style.display = 'block';
+      
+      try {
+        const { isYouTube, id, apikey } = validateInputs();
+        if (isYouTube) {
+          debugLog('YouTube URL detected, API test not applicable');
+          return;
+        }
+
+        const testUrl = `https://www.googleapis.com/drive/v3/files/${id}?key=${apikey}`;
+        debugLog('Testing Google Drive API:', testUrl);
+        
+        const response = await fetch(testUrl);
+        const result = await response.json();
+        
+        debugLog('API test response:', { 
+          status: response.status, 
+          result: result
+        });
+        
+      } catch (error) {
+        debugLog('API test failed:', error);
+      }
+    });
+
+    document.getElementById("debug-info").addEventListener("click", function () {
+      const debugOutput = document.getElementById('debug-output');
+      debugOutput.style.display = debugOutput.style.display === 'none' ? 'block' : 'none';
+      
+      if (debugOutput.style.display === 'block') {
+        debugOutput.innerHTML = 'Debug mode activated. Use other debug buttons to see output.\n\n';
+        debugLog('Debug info:', {
+          userAgent: navigator.userAgent,
+          currentTime: new Date().toISOString(),
+          workerUrl: WORKER_URL,
+          location: window.location.href
+        });
+      }
+    });
+
+    // Auto-clear messages when user starts typing
+    ['gdrive-id', 'api-key'].forEach(id => {
+      document.getElementById(id).addEventListener('input', clearMessages);
     });
   </script>
 </body>
